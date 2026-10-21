@@ -4,13 +4,17 @@ Static Next.js + Tailwind site for the Laruso project. No backend.
 
 ## Edit content
 
-Everything you'll want to change is in `src/content.ts`:
+All copy lives in `src/content.ts`. Anything not real yet is visibly tagged on the page:
 
-- `site.youtubeId` — paste the YouTube video ID to replace the video placeholder.
+- `site.builderName`, `site.city` — replace the `[...]` placeholders.
+- `site.youtubeId` — paste a YouTube video ID to embed the demo in the "See Laruso in action" block.
 - `links` — GitHub, LinkedIn, email. Set `placeholder: false` once real.
-- `results` — eval scores. Set `placeholder: false` on each row once measured.
-  The "Placeholder" banner disappears when no row is a placeholder.
-- `stack`, `problem` — short copy blocks.
+- `heroStatsSample`, `bookingRate.sample`, `checkDetail.sample` — set to `false` once the numbers come from real runs.
+- `unsafeDrafts` — set `value` to your eval result and `placeholder: false`.
+- `checks[].planned` — set to `false` when a check actually runs on that schedule.
+- `posts[].href` — add a link when a build-log post is published; the "Planned" tag disappears.
+
+Mocks (dashboard, triage, priorities, draft, chat, approval queue) are in `src/components/Mocks.tsx`.
 
 ## Run locally (from the Laruso folder)
 

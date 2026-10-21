@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Newsreader } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,16 +12,21 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const newsreader = Newsreader({
+  variable: "--font-newsreader",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
-  title: "Laruso — AI follow-up agent for car dealerships",
+  title: "Laruso — Never miss a follow-up",
   description:
-    "A prototype AI agent that finds dealership customers due for service or gone cold, drafts personal follow-ups, and waits for human approval. Runs on synthetic data and local models.",
+    "A prototype AI agent that finds dealership customers due for service or gone cold, drafts personalized follow-ups, and waits for a human to approve them. Synthetic data only.",
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f7f6f2" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f1114" },
+    { media: "(prefers-color-scheme: light)", color: "#f4f3ee" },
+    { media: "(prefers-color-scheme: dark)", color: "#121110" },
   ],
 };
 
@@ -33,7 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
