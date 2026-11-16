@@ -1,0 +1,353 @@
+/* ================= Motion system =================
+   One set of durations, easings and stagger used everywhere.
+   Everything here is transform/opacity/clip based and collapses under reduced motion. */
+
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-soft: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --d-1: 200ms;
+  --d-2: 450ms;
+  --d-3: 800ms;
+  --d-4: 1100ms;
+  --stagger: 90ms;
+}
+
+/* Pointer position for glow panels, registered so the light can glide after the cursor instead of snapping */
+@property --mx { syntax: "<length-percentage>"; inherits: true; initial-value: 50%; }
+@property --my { syntax: "<length-percentage>"; inherits: true; initial-value: 50%; }
+
+/* Lives in the components layer so Tailwind utilities (e.g. [transition-delay:…]) can still override per element. */
+@layer components {
+/* ---------- Scroll reveals ----------
+   `html.js` is added by MotionRoot, so content stays visible if JS never runs. */
+.js [data-reveal] {
+  opacity: 0;
+  transition:
+    opacity 1000ms var(--ease-soft),
+    transform 1200ms var(--ease-out);
+  transition-delay: calc(var(--i, 0) * var(--stagger) + var(--delay, 0ms));
+}
+.js [data-reveal="up"] { transform: translate3d(0, 28px, 0); }
+.js [data-reveal="left"] { transform: translate3d(-40px, 0, 0); }
+.js [data-reveal="right"] { transform: translate3d(40px, 0, 0); }
+.js [data-reveal="scale"] { transform: scale(0.96); }
+.js [data-reveal="words"] { opacity: 1; }
+.js [data-reveal][data-in] { opacity: 1; transform: none; }
+
+/* Word-by-word mask reveal: each word rises out of its own clipped box */
+.word-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
+}
+.word { display: inline-block; }
+.js [data-reveal="words"] .word {
+  transform: translate3d(0, 110%, 0);
+  transition: transform var(--d-4) var(--ease-out);
+  transition-delay: calc(var(--w, 0) * 55ms + var(--delay, 0ms));
+}
+.js [data-reveal="words"][data-in] .word { transform: none; }
+
+/* ---------- Hero intro (plays once on load, choreographed by --delay) ---------- */
+@keyframes word-rise {
+  from { transform: translate3d(0, 110%, 0); }
+  to { transform: none; }
+}
+@keyframes intro-rise {
+  from { opacity: 0; transform: translate3d(0, 18px, 0); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes intro-frame {
+  from { opacity: 0; transform: translate3d(0, 56px, 0); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes intro-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.intro-words .word {
+  animation: word-rise var(--d-4) var(--ease-out) both;
+  animation-delay: calc(var(--w, 0) * 80ms + 120ms);
+}
+.intro { animation: intro-rise var(--d-3) var(--ease-out) both; animation-delay: var(--delay, 0ms); }
+.intro-frame { animation: intro-frame 1300ms var(--ease-out) both; animation-delay: var(--delay, 0ms); }
+.intro-fade { animation: intro-fade 1600ms var(--ease-out) both; animation-delay: var(--delay, 0ms); }
+
+/* Hero frame settles as it scrolls into full view (scroll-linked, no JS) */
+@supports (animation-timeline: view()) {
+  @keyframes frame-settle {
+    from { transform: scale(0.95); }
+    to { transform: none; }
+  }
+  .scroll-settle {
+    animation: frame-settle linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 35%;
+  }
+}
+
+/* ---------- Links ---------- */
+/* Hot pink underline grows in from the left */
+.u-link {
+  background: linear-gradient(var(--pink), var(--pink)) 0 100% / 0 2px no-repeat;
+  transition: background-size var(--d-2) var(--ease-out), color var(--d-2) var(--ease-soft);
+}
+.u-link:hover,
+.u-link:focus-visible { background-size: 100% 2px; }
+
+/* Always-underlined links (hot pink): underline exits right, re-enters left */
+@keyframes underline-swap {
+  0% { background-size: 100% 1px; background-position: 100% 100%; }
+  45% { background-size: 0 1px; background-position: 100% 100%; }
+  46% { background-size: 0 1px; background-position: 0 100%; }
+  100% { background-size: 100% 1px; background-position: 0 100%; }
+}
+.u-swap {
+  background: linear-gradient(var(--pink), var(--pink)) 0 100% / 100% 1px no-repeat;
+  padding-bottom: 3px;
+}
+.u-swap:hover,
+.u-swap:focus-visible { animation: underline-swap 700ms var(--ease-in-out); }
+
+/* Arrows nudge in the direction they point */
+.nudge { transition: transform var(--d-2) var(--ease-out); }
+.group:hover .nudge,
+.group:focus-visible .nudge { transform: translateX(3px); }
+
+/* ---------- Buttons ---------- */
+.btn {
+  transition:
+    transform 300ms var(--ease-out),
+    background-color var(--d-2) var(--ease-soft),
+    color var(--d-2) var(--ease-soft),
+    box-shadow var(--d-3) var(--ease-out),
+    opacity var(--d-2) var(--ease-soft);
+}
+.btn:active { transform: scale(0.97); }
+.btn:disabled,
+.btn[aria-disabled="true"] { opacity: 0.45; pointer-events: none; box-shadow: none; }
+@media (hover: hover) {
+  .btn:hover { box-shadow: 0 10px 24px -12px var(--shadow); }
+}
+
+/* Primary action: vibrant cobalt fill, white text (>5.5:1). Hover deepens cobalt, lifts slightly,
+   and casts a cobalt/cyan glow. */
+.btn-primary {
+  background-color: var(--accent);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 6px 16px -10px rgba(30, 63, 216, 0.6);
+}
+@media (hover: hover) {
+  .btn-primary:hover {
+    background-color: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.25),
+      0 0 0 4px rgba(30, 63, 216, 0.18),
+      0 12px 28px -12px rgba(30, 63, 216, 0.7);
+  }
+}
+.btn-primary:active { transform: translateY(0) scale(0.97); background-color: var(--accent-hover); }
+
+/* ---------- Cards ---------- */
+.lift {
+  transition:
+    transform 600ms var(--ease-out),
+    box-shadow 600ms var(--ease-out),
+    border-color 600ms var(--ease-soft),
+    background-color 600ms var(--ease-soft);
+}
+@media (hover: hover) {
+  .lift:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(in srgb, var(--pink) 55%, var(--line));
+    box-shadow: 0 18px 40px -22px var(--shadow), 0 0 0 3px var(--pink-soft);
+  }
+}
+
+/* Built-with row: hovering one fades the rest */
+.fade-siblings > * { transition: opacity var(--d-3) var(--ease-out); }
+@media (hover: hover) {
+  .fade-siblings:hover > *:not(:hover) { opacity: 0.3; }
+}
+
+/* Glow panels: soft light follows the pointer */
+.pointer-glow::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1000ms var(--ease-soft);
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, 0.16), transparent 60%);
+}
+.pointer-glow:hover::before { opacity: 1; }
+.pointer-glow { transition: --mx 700ms var(--ease-out), --my 700ms var(--ease-out); }
+.pointer-glow > * { position: relative; z-index: 1; }
+
+/* ---------- Header ---------- */
+.site-header {
+  --hdr-bg: color-mix(in srgb, var(--surface) 80%, transparent);
+  --hdr-fg: var(--fg);
+  --hdr-muted: var(--muted);
+  --hdr-line: var(--line);
+  --hdr-pill: var(--teal-soft);
+}
+.hdr-box {
+  background: var(--hdr-bg);
+  color: var(--hdr-fg);
+  border: 1px solid var(--hdr-line);
+  /* Colors follow the animated theme tokens directly; a transition here would trail behind them */
+  transition: box-shadow var(--d-3) var(--ease-out);
+}
+.site-header[data-scrolled] .hdr-box { box-shadow: 0 10px 30px -18px var(--shadow); }
+
+/* Gliding hover pill behind nav links */
+.nav-pill {
+  background: var(--hdr-pill);
+  transition: opacity 350ms var(--ease-soft);
+}
+.nav-pill[data-glide] {
+  transition:
+    opacity 350ms var(--ease-soft),
+    transform 500ms var(--ease-out),
+    width 500ms var(--ease-out);
+}
+
+/* Mobile menu */
+.menu-panel {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate3d(0, -8px, 0) scale(0.98);
+  transform-origin: top right;
+  transition:
+    opacity 300ms var(--ease-soft),
+    transform var(--d-2) var(--ease-out),
+    visibility 0s linear var(--d-2);
+}
+.menu-panel[data-open] {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition:
+    opacity var(--d-2) var(--ease-out),
+    transform var(--d-2) var(--ease-out),
+    visibility 0s;
+}
+.menu-panel li {
+  opacity: 0;
+  transform: translate3d(0, 6px, 0);
+  transition: opacity var(--d-2) var(--ease-out), transform var(--d-2) var(--ease-out);
+}
+.menu-panel[data-open] li {
+  opacity: 1;
+  transform: none;
+  transition-delay: calc(var(--i, 0) * 45ms + 60ms);
+}
+.menu-icon span {
+  transition: transform var(--d-2) var(--ease-out), opacity var(--d-1) ease;
+}
+[aria-expanded="true"] .menu-icon span:first-child { transform: translateY(3px) rotate(45deg); }
+[aria-expanded="true"] .menu-icon span:last-child { transform: translateY(-3px) rotate(-45deg); }
+
+/* ---------- One-shot effects used by the mocks ---------- */
+.seq {
+  transition:
+    opacity var(--d-3) var(--ease-out),
+    transform var(--d-3) var(--ease-out),
+    background-color 900ms var(--ease-soft),
+    color 900ms var(--ease-soft),
+    width 1000ms var(--ease-out);
+}
+.seq-hidden { opacity: 0; transform: translate3d(0, 10px, 0); }
+
+/* Strike-through drawn per line (works when the text wraps) */
+.strike {
+  background: linear-gradient(currentColor, currentColor) 0 55% / 0% 1px no-repeat;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition: background-size 600ms var(--ease-in-out), color var(--d-3) var(--ease-out);
+}
+.strike[data-on] { background-size: 100% 1px; }
+
+.draw-check path {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  transition: stroke-dashoffset 500ms var(--ease-out);
+}
+.draw-check[data-on] path { stroke-dashoffset: 0; }
+
+.wipe {
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 900ms var(--ease-in-out);
+}
+.wipe[data-on] { clip-path: inset(0 0 0 0); }
+
+@keyframes typing {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-3px); opacity: 1; }
+}
+.typing span { animation: typing 1s var(--ease-in-out) infinite; }
+.typing span:nth-child(2) { animation-delay: 150ms; }
+.typing span:nth-child(3) { animation-delay: 300ms; }
+
+@keyframes press {
+  0%, 100% { transform: none; }
+  40% { transform: scale(0.9); }
+}
+.press { animation: press 420ms var(--ease-out); }
+
+/* Check glyphs turn slightly on hover */
+.glyph { transition: transform var(--d-3) var(--ease-out); }
+@media (hover: hover) {
+  .group:hover .glyph { transform: rotate(35deg); }
+}
+
+/* ---------- Hero accents ---------- */
+/* Hand-drawn hot pink underline: a wavy brush stroke that draws itself under the last headline word
+   once the words have risen. Its mask gets extra room below so the stroke isn't clipped. */
+.hl-mask {
+  padding-bottom: 0.32em;
+  margin-bottom: -0.32em;
+}
+.hl { position: relative; }
+.hl-stroke {
+  position: absolute;
+  left: -0.06em;
+  bottom: -0.2em;
+  width: calc(100% + 0.16em);
+  height: 0.3em;
+  overflow: visible;
+  color: var(--pink);
+}
+.hl-stroke path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+@keyframes hl-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+.intro-words .hl-stroke path { animation: hl-draw 850ms cubic-bezier(0.6, 0, 0.3, 1) 1050ms both; }
+
+/* ---------- Reduced motion: everything lands in its final state ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+  .js [data-reveal],
+  .js [data-reveal] .word { opacity: 1; transform: none; }
+}
+
+}
