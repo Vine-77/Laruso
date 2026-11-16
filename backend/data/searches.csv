@@ -1,0 +1,6 @@
+guest_name,email,date,room_type,nights,booked
+Kate Johnson,kate.johnson@example.com,2026-03-10,double,3,yes
+Justin Lee,justin.lee@example.com,2025-12-14,suite,3,yes
+Lamelo Ball,lamelo.ball@example.com,2026-01-20,single,2,no
+Yexel Lopez,yexel.lopez@example.com,2026-03-10,double,3,no
+Maria Garcia,maria.garcia@example.com,2025-07-05,double,3,yes

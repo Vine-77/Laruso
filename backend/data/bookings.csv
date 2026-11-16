@@ -1,0 +1,7 @@
+guest_name,email,check_in,check_out,room_type,opted_out
+Jane Miller,jane.miller@example.com,2026-03-10,2026-03-13,double,no
+Sam Okoye,sam.okoye@example.com,2025-12-14,2025-12-17,suite,no
+Tom Baker,tom.baker@example.com,2025-07-05,2025-07-12,double,no
+Thomas Baker,tom.baker@example.com,2024-07-06,2024-07-13,double,no
+Lena Fischer,lena.fischer@example.com,2026-01-20,2026-01-22,single,yes
+
