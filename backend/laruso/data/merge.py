@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas as pd
 
-DATA = Path(__file__).parent / "data"
+DATA = Path(__file__).resolve().parents[2] / "data"
 
 bookings = pd.read_csv(DATA / "bookings.csv")
 complaints = pd.read_csv(DATA / "complaints.csv")
