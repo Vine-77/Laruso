@@ -6,9 +6,11 @@ agent to real data — see scripts/run_pipeline.py) should import from here, not
 free to change without breaking callers, and it's the seam the agent_system package is
 deliberately kept on the other side of (see agent_system/shared/contracts.py).
 """
+from agent_system.shared.contracts import GuestRecord
+
 from .merge import build_guests
 
 
-def list_guests() -> list[dict]:
+def list_guests(hotel_id: str) -> list[GuestRecord]:
     """Every known guest as a plain dict matching agent_system.shared.contracts.GuestRecord."""
-    return build_guests()
+    return [g for g in build_guests() if g["hotel_id"] == hotel_id]

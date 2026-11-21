@@ -14,4 +14,4 @@ from backend.app.modules.guests.service import list_guests
 from agent_system.packages.guest_retention.pipeline import run_pipeline, show
 
 if __name__ == "__main__":
-    show(run_pipeline(date.today(), OllamaLLM(), list_guests()))
+    show(run_pipeline(date.today(), OllamaLLM(), list_guests("H001")))

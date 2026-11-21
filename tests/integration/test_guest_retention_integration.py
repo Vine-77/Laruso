@@ -19,19 +19,19 @@ def by_email(guests):
 
 
 def test_merged_guests_work_with_scoring():
-    guests = by_email(list_guests())
+    guests = by_email(list_guests("H001"))
     assert score_guest(guests["jane.miller@example.com"], TODAY) == ["Guest has an open complaint"]
     assert score_guest(guests["lena.fischer@example.com"], TODAY) == []
 
 
 def test_real_sample_data_is_prioritized():
-    queue = prioritize(list_guests(), TODAY)
+    queue = prioritize(list_guests("H001"), TODAY)
     names = [q["guest"]["name"] for q in queue]
     assert "Jane Miller" in names and "Lena Fischer" not in names
 
 
 def test_pipeline_runs_end_to_end_on_real_sample_data():
-    queue = run_pipeline(TODAY, FakeLLM(CLEAN), list_guests())
+    queue = run_pipeline(TODAY, FakeLLM(CLEAN), list_guests("H001"))
     names = [q.guest["name"] for q in queue]
     assert "Jane Miller" in names
     assert "Lena Fischer" not in names           # opted out
