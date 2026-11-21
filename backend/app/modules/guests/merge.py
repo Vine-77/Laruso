@@ -3,7 +3,10 @@ from pathlib import Path
 
 import pandas as pd
 
-DATA = Path(__file__).resolve().parents[2] / "data"
+# repo_root/backend/app/modules/guests/merge.py -> parents[4] is the repo root.
+# Sample/test data lives in sandbox/fixtures, kept out of this production module on purpose
+# (see PROJECT_OVERVIEW.md) so real guest data sources never get mixed up with fixtures.
+DATA = Path(__file__).resolve().parents[4] / "sandbox" / "fixtures"
 
 # If a guest has no booking row we have no consent information for them.
 # True = treat them as opted out (safe). Change to False to contact them anyway.

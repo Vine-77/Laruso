@@ -1,4 +1,4 @@
-from .llm import LLM
+from ai.model_gateway.llm import LLM
 
 SYSTEM = (
     "You write short, warm, personal follow-up messages from a hotel to a past guest. "

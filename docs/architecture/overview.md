@@ -17,48 +17,87 @@ Whenever the two disagree, Part A wins. Update Part A whenever you finish meanin
 
 Laruso today is a **small, working prototype of one agent** from the much larger vision in Part B: a **guest follow-up assistant** for a single hotel, with no database, no multi-tenancy, and no orchestration layer. It is best understood as an early proof-of-concept for the **Guest Retention Agent** (Part B, §5.1) and a sliver of the **Guest Communication Agent** (§5.3) consent/guardrail idea, built bottom-up before any of the Phase 1–4 platform foundations exist.
 
+The repo was reorganized (2026-11-21) from a single flat `backend/laruso/` package into the modular layout the long-term architecture (Part B, §3) calls for: `backend/`, `ai/`, `agent_system/`, plus `frontend/`, `sandbox/`, `docs/`, `scripts/`, `tests/`. **This was a reorganization, not a rewrite** — every module, test, prompt and guardrail from before still exists and does the same thing; only its location, package name, and (in `pipeline.py`'s case) how it receives guest data changed.
+
 Repo layout:
 
 ```
-website/   Next.js marketing/landing page for Laruso (the product pitch, not an app dashboard)
-backend/   Python package: the guest follow-up pipeline described below
+frontend/           Next.js marketing/landing page for Laruso (the product pitch, not an app dashboard)
+backend/app/        The real, backend-owned domain logic (today: just the guests module)
+ai/                 Model-provider infrastructure, usable by any future agent
+agent_system/       Reusable agent packages, kept decoupled from backend internals
+sandbox/fixtures/   Sample/fictional guest data — kept out of production modules
+docs/architecture/  This file
+scripts/            Composition-root scripts that wire backend + ai + agent_system together
+tests/integration/  The only tests allowed to depend on both backend and agent_system
 ```
 
-### Backend (`backend/laruso/`)
+One Python project (one root `pyproject.toml`) covers `backend`, `ai` and `agent_system` — they're kept logically separate by directory and import rules, not by being separate installable packages (per explicit instruction; revisit this only if/when they need to deploy or scale independently).
 
-A single, linear pipeline, each stage a small pure module, data passed as plain dicts/lists — no framework, no database, no API layer yet:
+### Backend (`backend/app/modules/guests/`)
 
-1. **`data/merge.py`** — reads three sample CSVs (`bookings.csv`, `complaints.csv`, `searches.csv`) from `backend/data/`, keys guests by normalized email, and produces one guest dict with: `email`, `name`, `last_stay`, `opted_out`, `open_complaint`, `unfinished_search`. A guest with no booking row has no consent record and defaults to `opted_out = True` (fail-safe).
-2. **`scoring/rules.py`** — pure function returning the *reasons* to contact a guest (open complaint / unfinished search / ~a year since last stay). Opted-out guests always return no reasons.
-3. **`scoring/priority.py`** — buckets guests with reasons into `Contact today` / `This week` / `Later`, matching the three groups shown on the marketing site, most urgent first.
-4. **`agent/llm.py`** — an `LLM` Protocol so the model provider is swappable. `OllamaLLM` calls a local Ollama server (default model `gemma3:4b`) over HTTP; `FakeLLM` returns a fixed string for tests.
-5. **`agent/draft.py`** — builds the system/user prompt and asks the `LLM` for a <60-word follow-up message. The system prompt already tells the model not to mention prices/discounts/rooms or make promises — but this instruction is **not trusted on its own**.
-6. **`guardrails/checks.py`** — the actual safety net. Independently (regex/string checks, no LLM) flags: opted-out guests, too-short/too-long drafts, `[placeholder]` text, any price/discount/currency wording or symbol, and any room-benefit promise (upgrade, suite, sea view, etc.).
-7. **`pipeline.py`** — wires merge → score/prioritize → draft → guardrails into a list of `QueueItem` (guest, reasons, priority, draft text, issues, status). Every item starts as `status = "pending"`; nothing is ever sent automatically. A CLI entry point (`python -m laruso.pipeline`) prints the queue.
+The only real backend domain module so far:
 
-Tests exist for every stage (`backend/tests/test_merge.py`, `test_scoring.py`, `test_priority.py`, `test_guardrails.py`, `test_draft.py`, `test_pipeline.py`) and currently all pass (`pytest` from `backend/`).
+- **`merge.py`** — reads three sample CSVs (`bookings.csv`, `complaints.csv`, `searches.csv`) from `sandbox/fixtures/` (deliberately *not* inside this module — see "Sample data" below), keys guests by normalized email, and produces one guest dict with: `email`, `name`, `last_stay`, `opted_out`, `open_complaint`, `unfinished_search`. A guest with no booking row has no consent record and defaults to `opted_out = True` (fail-safe).
+- **`service.py`** — the module's *public interface*. Everything outside `guests/` (scripts, future API routes, other modules) should call `service.list_guests()` rather than importing `merge` directly, so the CSV implementation can be swapped for a real database later without breaking callers.
 
-`laruso/api/` exists as an empty package — a placeholder for the approval-queue endpoints mentioned in the old README, not yet implemented.
+`backend/app/api/` exists as an empty package — a placeholder for the approval-queue endpoints mentioned in the old README, not yet implemented. `backend/app/core`, `database/`, `models/`, `schemas/`, `services/`, `events/`, `integrations/`, and every other domain module in Part B §3.1 (hotels, users, reservations, rooms, housekeeping, finance, analytics) **do not exist yet** — deliberately not scaffolded empty.
 
-### Frontend (`website/`)
+### AI infrastructure (`ai/model_gateway/`)
 
-A Next.js landing page for the product (hero, motion/scroll effects, ASCII gradient art, mock screenshots) — marketing only. It is **not** the Agent Control Center or any kind of operational dashboard; it doesn't talk to the backend at all yet.
+- **`llm.py`** — an `LLM` Protocol so the model provider is swappable. `OllamaLLM` calls a local Ollama server (default model `gemma3:4b`) over HTTP; `FakeLLM` returns a fixed string for tests. This is the real (if minimal) start of the "model-serving abstraction" in Part B §8 — any future agent package can depend on `ai.model_gateway`, not on Ollama directly.
+
+`ai/orchestrator`, `model_config`, `memory`, `tools`, `knowledge_base`, `evaluations` **do not exist yet.**
+
+### Agent system (`agent_system/`)
+
+```
+agent_system/
+├── shared/
+│   ├── contracts.py    GuestRecord — the data shape agents depend on, instead of backend internals
+│   └── guardrails.py   content-safety checks, reusable by any guest-facing agent
+└── packages/
+    └── guest_retention/
+        ├── rules.py       eligibility reasons (open complaint / unfinished search / ~a year since last stay)
+        ├── priority.py    buckets into Contact today / This week / Later
+        ├── draft.py       builds the prompt, asks the LLM for a <60-word message
+        ├── pipeline.py    rules -> priority -> draft -> guardrails -> QueueItem list
+        └── tests/
+```
+
+**The key architectural rule enforced here:** nothing in `agent_system/` imports anything from `backend/`. `pipeline.run_pipeline(today, llm, guests)` takes guests as plain data typed against `agent_system.shared.contracts.GuestRecord` — a contract the agent system itself owns and depends on, not one it reaches into backend to get. Whoever wires a real run together (today: `scripts/run_pipeline.py`) is responsible for fetching real guest data (via `backend.app.modules.guests.service.list_guests()`) and handing it over. This is dependency inversion, not just a file move: backend's CSV implementation can become a database tomorrow and `agent_system` would need zero changes.
+
+The system prompt in `draft.py` tells the model not to mention prices/discounts/rooms or make promises — but that instruction is **not trusted on its own**; `shared/guardrails.py` independently (regex/string checks, no LLM) flags opted-out guests, too-short/too-long drafts, `[placeholder]` text, any price/discount/currency wording or symbol, and any room-benefit promise.
+
+`agent_system/registry`, `instances`, `builder` (the agent lifecycle machinery from Part B §6) **do not exist yet.** Only one package (`guest_retention`) exists under `packages/`.
+
+### Sample data (`sandbox/fixtures/`)
+
+The three sample CSVs live here — explicitly separated from `backend/app/modules/guests/`, which is meant to hold production guest-domain logic only, not fixture data. `backend/scripts/sample_data.py` (re)generates them. The rest of the `sandbox/` concept from Part B §13 (simulated hotels, mock channels, a testing dashboard, etc.) **does not exist yet** — only the fixtures directory, which was needed now.
+
+### Tests
+
+- Unit tests live beside the code they test and never cross the backend/agent_system boundary: `backend/app/modules/guests/tests/`, `agent_system/packages/guest_retention/tests/`.
+- `tests/integration/test_guest_retention_integration.py` is the one place allowed to import both `backend` and `agent_system` — it proves the seam between them (real sample data flowing through the real pipeline) actually works end to end.
+- All 39 tests pass as of this reorganization (`python -m pytest` from the repo root).
+
+### Frontend (`frontend/`, renamed from `website/`)
+
+A Next.js landing page for the product (hero, motion/scroll effects, ASCII gradient art, mock screenshots) — marketing only. It is **not** the Agent Control Center or any kind of operational dashboard; it doesn't talk to the backend at all yet. Build verified working after the rename.
 
 ### How to run it
 
 ```
 npm run install:all
-npm run dev              # website (Next.js)
+npm run dev                         # frontend (Next.js)
 ```
 
 ```
-cd backend
 python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-python scripts/sample_data.py      # write sample CSVs to backend/data
-python -m laruso.data.merge        # build guest profiles
-python -m laruso.pipeline          # run the full merge -> score -> draft -> guardrails pipeline
-pytest                              # run backend tests
+pip install -e ".[dev]"             # one editable install, from the repo root
+python backend/scripts/sample_data.py   # write sample CSVs to sandbox/fixtures/
+python scripts/run_pipeline.py          # composition root: backend data -> ai -> agent_system
+pytest                                   # run every test (unit + integration)
 ```
 
 Example data only. Not a commercial product (yet).
@@ -67,18 +106,19 @@ Example data only. Not a commercial product (yet).
 
 - Phase 1 (auth, multi-tenancy, DB, dashboard foundation): **not started.**
 - Phase 2 (hotel/room/reservation data model, real Guest CRM): **not started** — the "guest profile" here is a flat dict rebuilt from CSVs on every run, not a persisted CRM record.
-- Phase 3 (agent packages, registration, orchestrator, model-serving abstraction): **not started as infrastructure** — but the `LLM` protocol in `agent/llm.py` is a minimal, honest first step toward "model independence" (§17.6) and local Ollama usage (§8) is already proven out with `gemma3:4b`.
+- Phase 3 (agent packages, registration, orchestrator, model-serving abstraction): **the directory shape now exists** (`agent_system/packages/`, `ai/model_gateway/`), proven with one real package (`guest_retention`) and one real gateway (`OllamaLLM`/`gemma3:4b`). Registration, discovery, orchestration and model routing as described in §3.2/§7 are still **not implemented** — there's exactly one package and one hand-wired script, no registry.
 - Phase 4 (Reception/Booking/Housekeeping agents): **not started.**
-- Phase 5 (Guest Retention / Booking Recovery / Communication agents): **a vertical slice of Guest Retention exists** — eligibility scoring, prioritization, drafting, and guardrails are all real and tested. No CRM, no real channel delivery, no opt-out UI, no booking-recovery or live-chat agent yet.
-- Phases 6–10 (sandbox, additional agents, BI, voice, multi-tenant production hardening): **not started.**
+- Phase 5 (Guest Retention / Booking Recovery / Communication agents): **a vertical slice of Guest Retention exists**, now properly isolated as its own agent package. No CRM, no real channel delivery, no opt-out UI, no booking-recovery or live-chat agent yet.
+- Phases 6–10 (sandbox simulation/testing dashboard, additional agents, BI, voice, multi-tenant production hardening): **not started** beyond the `sandbox/fixtures/` directory.
 
 ### Known gaps / fragile points worth flagging to whoever works on this next
 
 - No persistence: everything is recomputed from CSVs on each run; there's no way yet to record a human's approve/edit/reject decision or to avoid re-queuing the same guest.
-- No API (`laruso/api/` is empty) and no connection between `website/` and `backend/`.
+- No API (`backend/app/api/` is empty) and no connection between `frontend/` and `backend/`.
 - Single hotel, implicitly — no tenant concept anywhere.
 - `DEFAULT_OPTED_OUT` in `merge.py` is a module-level constant, not configuration — fine for a prototype, would need to move into real per-hotel settings later.
 - Guardrails are deliberately simple string/regex checks, not LLM-based — this is intentional (§12 "AI-generated decisions must never bypass backend validation") and should be preserved as a pattern even as the system grows.
+- The backend/agent_system decoupling is enforced by convention and by `agent_system/shared/contracts.py`'s `GuestRecord` TypedDict, not by a hard runtime boundary (e.g. a network call or a separate process). That's the right amount of rigor for a single-process prototype; if agents ever run as separate services, this is the seam that would become a real API call.
 
 ---
 

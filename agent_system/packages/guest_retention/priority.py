@@ -1,5 +1,7 @@
 from datetime import date
 
+from agent_system.shared.contracts import GuestRecord
+
 from .rules import score_guest
 
 # Matches the three groups on the Laruso site. Lower number = more urgent.
@@ -9,7 +11,7 @@ LATER = "Later"
 _ORDER = {CONTACT_TODAY: 0, THIS_WEEK: 1, LATER: 2}
 
 
-def _priority(guest: dict) -> str:
+def _priority(guest: GuestRecord) -> str:
     if guest["open_complaint"]:
         return CONTACT_TODAY      # an unhappy guest is the most urgent
     if guest["unfinished_search"]:
@@ -17,7 +19,7 @@ def _priority(guest: dict) -> str:
     return LATER                  # return visit: no rush
 
 
-def prioritize(guests: list[dict], today: date) -> list[dict]:
+def prioritize(guests: list[GuestRecord], today: date) -> list[dict]:
     """Guests worth contacting, most urgent first. Each item: guest, reasons, priority."""
     queue = []
     for guest in guests:

@@ -1,5 +1,5 @@
-from laruso.agent.draft import draft_message
-from laruso.agent.llm import FakeLLM
+from agent_system.packages.guest_retention.draft import draft_message
+from ai.model_gateway.llm import FakeLLM
 
 
 def test_draft_uses_llm_reply():

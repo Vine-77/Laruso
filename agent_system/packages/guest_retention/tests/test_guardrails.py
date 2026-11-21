@@ -1,4 +1,4 @@
-from laruso.guardrails.checks import check_draft
+from agent_system.shared.guardrails import check_draft
 
 CLEAN = "Hi Jane, we would love to welcome you back soon. Warm regards, the team."
 

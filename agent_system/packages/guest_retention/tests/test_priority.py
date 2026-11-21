@@ -1,7 +1,6 @@
 from datetime import date
 
-from laruso.data.merge import build_guests
-from laruso.scoring.priority import CONTACT_TODAY, LATER, THIS_WEEK, prioritize
+from agent_system.packages.guest_retention.priority import CONTACT_TODAY, LATER, THIS_WEEK, prioritize
 
 TODAY = date(2026, 11, 19)
 
@@ -36,9 +35,3 @@ def test_complaint_wins_when_guest_has_several_reasons():
     queue = prioritize([make_guest("jane", open_complaint=True, unfinished_search=True)], TODAY)
     assert queue[0]["priority"] == CONTACT_TODAY
     assert len(queue[0]["reasons"]) == 2
-
-
-def test_real_sample_data():
-    queue = prioritize(build_guests(), TODAY)
-    names = [q["guest"]["name"] for q in queue]
-    assert "Jane Miller" in names and "Lena Fischer" not in names

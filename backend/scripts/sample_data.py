@@ -1,8 +1,9 @@
 from pathlib import Path
 import pandas as pd
 
-DATA = Path(__file__).resolve().parents[1] / "data"
-DATA.mkdir(exist_ok=True)
+# repo_root/backend/scripts/sample_data.py -> parents[2] is the repo root.
+DATA = Path(__file__).resolve().parents[2] / "sandbox" / "fixtures"
+DATA.mkdir(parents=True, exist_ok=True)
 
 bookings = [
     # guest_name, email, check_in, check_out, room_type, opted_out

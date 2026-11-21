@@ -1,6 +1,6 @@
 from datetime import date
 
-from laruso.scoring.rules import score_guest
+from agent_system.packages.guest_retention.rules import score_guest
 
 TODAY = date(2026, 11, 18)
 

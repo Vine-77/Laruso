@@ -1,7 +1,6 @@
 from datetime import date
 
-from laruso.data.merge import build_guests
-from laruso.scoring.rules import score_guest
+from backend.app.modules.guests.merge import build_guests
 
 
 def by_email(guests):
@@ -45,12 +44,5 @@ def test_lamelo_never_stayed_and_has_unfinished_search():
 
 
 def test_guest_with_no_consent_info_uses_the_default():
-    from laruso.data.merge import DEFAULT_OPTED_OUT
+    from backend.app.modules.guests.merge import DEFAULT_OPTED_OUT
     assert by_email(build_guests())["lamelo.ball@example.com"]["opted_out"] is DEFAULT_OPTED_OUT
-
-
-def test_merged_guests_work_with_scoring():
-    today = date(2026, 11, 18)
-    guests = by_email(build_guests())
-    assert score_guest(guests["jane.miller@example.com"], today) == ["Guest has an open complaint"]
-    assert score_guest(guests["lena.fischer@example.com"], today) == []

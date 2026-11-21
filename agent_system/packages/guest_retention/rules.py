@@ -1,6 +1,9 @@
 from datetime import date
 
-def score_guest(guest: dict, today: date) -> list[str]:
+from agent_system.shared.contracts import GuestRecord
+
+
+def score_guest(guest: GuestRecord, today: date) -> list[str]:
     """Return the reasons to contact this guest. Empty list means no reason. """
     reasons = []
     if guest["opted_out"]:
