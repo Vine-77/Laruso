@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: laruso
+      POSTGRES_PASSWORD: laruso
+      POSTGRES_DB: laruso
+    ports:
+      - "5432:5432"
+    volumes:
+      - laruso_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U laruso"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg2://laruso:laruso@db:5432/laruso
+      SECRET_KEY: dev-secret-change-me-this-is-not-secure
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # The model gateway (ai/model_gateway/llm.py's OllamaLLM) talks to this over HTTP.
+  # Not wired into the API yet — this just makes it available for when it is.
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - laruso_ollama_data:/root/.ollama
+
+volumes:
+  laruso_db_data:
+  laruso_ollama_data:
