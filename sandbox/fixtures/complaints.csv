@@ -1,7 +1,8 @@
-guest_name,email,date,complaint,replied
-Jane Miller,jane.miller@example.com,2026-03-15,noise from construction,no
-Sam Okoye,sam.okoye@example.com,2025-12-18,dirty room,no
-Tom Baker,tom.baker@example.com,2025-07-10,noisy neighbors,yes
-Thomas Baker,tom.baker@example.com,2024-07-11,noisy neighbors,yes
-Lena Fischer,lena.fischer@example.com,2026-01-25,poor service,no
-Kate Johnson,kate.johnson@example.com,2026-03-15,slow internet,yes
+hotel_id,guest_name,email,date,complaint,replied
+H001,Jane Miller,jane.miller@example.com,2026-03-15,noise from construction,no
+H001,Sam Okoye,sam.okoye@example.com,2025-12-18,dirty room,no
+H001,Tom Baker,tom.baker@example.com,2025-07-10,noisy neighbors,yes
+H001,Thomas Baker,tom.baker@example.com,2024-07-11,noisy neighbors,yes
+H001,Lena Fischer,lena.fischer@example.com,2026-01-25,poor service,no
+H001,Kate Johnson,kate.johnson@example.com,2026-03-15,slow internet,yes
+H002,Omar Haddad,omar.haddad@example.com,2026-02-15,late check-in,no

@@ -1,6 +1,7 @@
-guest_name,email,date,room_type,nights,booked
-Kate Johnson,kate.johnson@example.com,2026-03-10,double,3,yes
-Justin Lee,justin.lee@example.com,2025-12-14,suite,3,yes
-Lamelo Ball,lamelo.ball@example.com,2026-01-20,single,2,no
-Yexel Lopez,yexel.lopez@example.com,2026-03-10,double,3,no
-Maria Garcia,maria.garcia@example.com,2025-07-05,double,3,yes
+hotel_id,guest_name,email,date,room_type,nights,booked
+H001,Kate Johnson,kate.johnson@example.com,2026-03-10,double,3,yes
+H001,Justin Lee,justin.lee@example.com,2025-12-14,suite,3,yes
+H001,Lamelo Ball,lamelo.ball@example.com,2026-01-20,single,2,no
+H001,Yexel Lopez,yexel.lopez@example.com,2026-03-10,double,3,no
+H001,Maria Garcia,maria.garcia@example.com,2025-07-05,double,3,yes
+H002,Priya Nair,priya.nair@example.com,2026-03-01,suite,2,no

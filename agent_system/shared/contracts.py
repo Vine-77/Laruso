@@ -21,3 +21,4 @@ class GuestRecord(TypedDict):
     opted_out: bool
     open_complaint: bool
     unfinished_search: bool
+    hotel_id: str

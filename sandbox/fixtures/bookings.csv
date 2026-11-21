@@ -1,6 +1,8 @@
-guest_name,email,check_in,check_out,room_type,opted_out
-Jane Miller,jane.miller@example.com,2026-03-10,2026-03-13,double,no
-Sam Okoye,sam.okoye@example.com,2025-12-14,2025-12-17,suite,no
-Tom Baker,tom.baker@example.com,2025-07-05,2025-07-12,double,no
-Thomas Baker,tom.baker@example.com,2024-07-06,2024-07-13,double,no
-Lena Fischer,lena.fischer@example.com,2026-01-20,2026-01-22,single,yes
+hotel_id,guest_name,email,check_in,check_out,room_type,opted_out
+H001,Jane Miller,jane.miller@example.com,2026-03-10,2026-03-13,double,no
+H001,Sam Okoye,sam.okoye@example.com,2025-12-14,2025-12-17,suite,no
+H001,Tom Baker,tom.baker@example.com,2025-07-05,2025-07-12,double,no
+H001,Thomas Baker,tom.baker@example.com,2024-07-06,2024-07-13,double,no
+H001,Lena Fischer,lena.fischer@example.com,2026-01-20,2026-01-22,single,yes
+H002,Jane Miller,jane.miller@example.com,2025-06-01,2025-06-04,suite,no
+H002,Omar Haddad,omar.haddad@example.com,2026-02-10,2026-02-14,double,no
